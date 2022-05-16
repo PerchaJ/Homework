@@ -1,0 +1,88 @@
+---
+- name: Configure Switches and Vlans
+  hosts: switches
+  gather_facts: false
+ 
+  tasks:
+    - name: Set MOTD
+      ios_banner:
+        banner: motd
+        text: "Configured by Ansible automation. Use the Ansible configuration-as-code files to update this device's settings. Do not edit the configuration directly unless directed to do so by the Director of IT!"
+        state: present
+    
+    - name: Set Host Name
+      ios_system:
+        hostname: "{{ new_hostname }}"
+        state: present
+      
+- name: Setting up VLANS
+  hosts: switches
+  tasks:
+    - name: creating VLANS. 
+      ios_vlans:
+        config:
+        - name: "{{ item.VLAN_name }}"
+          vlan_id: "{{ item.ID }}"
+          shutdown: disabled
+          state: active
+        state: replaced
+
+      loop:
+        - { VLAN_name: IT, ID: 10}
+        - { VLAN_name: Finance, ID: 20}
+        - { VLAN_name: Business/Marketing, ID: 30}
+
+- name: Attaching vlans to interfaces
+  hosts: switches
+  gather_facts: false
+  tasks:
+    - name: attaching now...
+      ios_l2_interfaces:
+        config:
+        - name: "{{ item.port }}"
+          access:
+            vlan: "{{ item.vlan }}"
+
+      loop:
+        - { port: "GigabitEthernet1/0/1", vlan: 10}
+        - { port: "GigabitEthernet1/0/2", vlan: 10}
+        - { port: "GigabitEthernet1/0/3", vlan: 10}
+        - { port: "GigabitEthernet1/0/4", vlan: 10}
+        - { port: "GigabitEthernet1/0/5", vlan: 10}
+        - { port: "GigabitEthernet1/0/6", vlan: 10}
+        - { port: "GigabitEthernet1/0/7", vlan: 10}
+        - { port: "GigabitEthernet1/0/8", vlan: 10}
+        - { port: "GigabitEthernet1/0/9", vlan: 20}
+        - { port: "GigabitEthernet1/0/10", vlan: 20}
+        - { port: "GigabitEthernet1/0/11", vlan: 20}
+        - { port: "GigabitEthernet1/0/12", vlan: 20}
+        - { port: "GigabitEthernet1/0/13", vlan: 20}
+        - { port: "GigabitEthernet1/0/14", vlan: 20}
+        - { port: "GigabitEthernet1/0/15", vlan: 20}
+        - { port: "GigabitEthernet1/0/16", vlan: 20}
+        - { port: "GigabitEthernet1/0/17", vlan: 30}
+        - { port: "GigabitEthernet1/0/18", vlan: 30}
+        - { port: "GigabitEthernet1/0/19", vlan: 30}
+        - { port: "GigabitEthernet1/0/20", vlan: 30}
+        - { port: "GigabitEthernet1/0/21", vlan: 30}
+        - { port: "GigabitEthernet1/0/22", vlan: 30}
+
+
+- name: Trunking
+  hosts: switches
+  gather_facts: false
+  tasks:
+    - name: Setting interfaces GE 24 as a trunk on switch 1 and 2
+      ios_l2_interfaces:
+        config:
+        - name: GigabitEthernet0/24
+          trunk:
+            allowed_vlans: all
+        state: replaced
+
+    - name: Save config
+      ios_config:
+        save_when: modified
+
+      
+

@@ -1,0 +1,48 @@
+hostname switch1
+no ip domain-lookup
+ip domain-name ansible-labs.local
+crypto key generate rsa
+2048
+ip ssh version 2
+username admin secret cisco
+enable password cisco
+line vty 0 15
+transport input ssh
+login local
+exit
+interface vlan10
+ip address 10.1.11.101 255.255.255.0
+no shut
+
+exit
+interface gigabitEthernet 1/0/1
+switchport mode access
+switchport access vlan 10
+interface range gigabitEthernet 1/0/24 - 28
+switchport mode trunk
+exit
+
+
+hostname switch2
+no ip domain-lookup
+ip domain-name ansible-labs.local
+crypto key generate rsa
+2048
+ip ssh version 2
+username admin secret cisco
+enable password cisco
+line vty 0 15
+transport input ssh
+login local
+exit
+interface vlan10
+ip address 10.1.11.102 255.255.255.0
+no shut
+
+exit
+interface gigabitEthernet 1/0/1
+switchport mode access
+switchport access vlan 10
+interface range gigabitEthernet 1/0/24 - 28
+switchport mode trunk
+exit
