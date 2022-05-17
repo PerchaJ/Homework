@@ -1,0 +1,39 @@
+---
+- name: Switch intervlan routing
+  hosts: switches
+  gather_facts: false
+  tasks:
+    - name: bringing up VLANs
+      ios_config:
+        lines:
+          - interface vlan 10
+          - interface vlan 20
+          - interface vlan 30
+
+    - name: Setting up inter-vlan routing
+      ios_l3_interfaces:
+        config:
+        - name: "{{ item.vlan }}"
+          ipv4:
+          - address: "{{ item.ipv }}"
+        state: replaced
+      when: item.Device in inventory_hostname
+      loop:
+        - { Device: "switch1", vlan: "vlan20", ipv: "10.1.22.101/24"}
+        - { Device: "switch1", vlan: "vlan30", ipv: "10.1.33.101/24"}
+        - { Device: "switch2", vlan: "vlan20", ipv: "10.1.22.102/24"}
+        - { Device: "switch2", vlan: "vlan30", ipv: "10.1.33.102/24"}
+    - name: Enabling routing!
+      ios_config:
+        lines:
+        - ip routing
+
+
+- name: testing inter-vlan routing
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+    - name: Ping
+      shell: ping -c 1 -w 2 10.1.22.101
+      register: ping_result
